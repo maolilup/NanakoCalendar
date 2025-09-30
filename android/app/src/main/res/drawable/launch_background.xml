@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- 修改此文件以自定义启动闪屏 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@android:color/white" />
 
-    <!-- You can insert your own image assets here -->
+    <!-- 您可以在此处插入自己的图像资源 -->
     <!-- <item>
         <bitmap
             android:gravity="center"
