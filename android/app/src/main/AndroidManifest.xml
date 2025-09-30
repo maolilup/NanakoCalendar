@@ -12,9 +12,9 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- 指定一个Android主题，在Android进程启动后立即应用到此Activity。
-                 在Flutter UI初始化期间，用户可以看到这个主题。
-                 此后，该主题继续决定Flutter UI背后的窗口背景。 -->
+<!-- Specifies an Android theme that is immediately applied to this Activity when the Android process starts.
+     This theme is visible to the user during Flutter UI initialization.
+     Afterwards, this theme continues to determine the background of the window behind the Flutter UI. -->
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
@@ -24,17 +24,17 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- 不要删除以下元数据。
-             Flutter工具使用它来生成GeneratedPluginRegistrant.java -->
+<!-- 不要删除以下元数据。
+     Flutter工具使用它来生成GeneratedPluginRegistrant.java -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-    <!-- 需要查询能够处理文本的活动，参见：
+<!-- 需要查询能够处理文本的活动，请参阅：
          https://developer.android.com/training/package-visibility 和
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT。
 
-         特别是，Flutter引擎在io.flutter.plugin.text.ProcessTextPlugin中使用此功能。 -->
+         具体来说，Flutter引擎在io.flutter.plugin.text.ProcessTextPlugin中使用它。 -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
