@@ -43,10 +43,32 @@
 - **windows/**: Windows桌面应用支持，包含C++原生代码和Visual Studio项目文件。
 
 ### 核心源码目录 (lib/)
-- **main.dart**: 应用程序入口点和主界面代码。包含：
-  - `MyApp`: 主应用程序组件，配置Material主题和路由。
-  - `MyHomePage`: 主页状态组件，实现计数器功能演示。
-  - `_MyHomePageState`: 管理主页状态，处理用户交互。
+- **main.dart**: 应用程序入口点，配置全局主题和路由，加载主页组件。
+
+#### 核心目录 (core/)
+- **core/models/**: 数据模型目录
+  - `schedule.dart`: 日程数据模型类，定义日程的基本属性和序列化方法
+- **core/services/**: 服务层目录
+  - `schedule_service.dart`: 日程管理服务类，负责处理日程的增删改查等业务逻辑
+
+#### 功能模块目录 (features/)
+- **features/calendar/**: 日历功能模块
+  - **features/calendar/screens/**: 日历页面目录
+    - `home_screen.dart`: 主页面组件，应用的主界面，展示日程列表和操作入口
+  - **features/calendar/widgets/**: 日历组件目录
+    - `calendar_widget.dart`: 日历组件，基于table_calendar实现日历展示功能
+- **features/schedule/**: 日程功能模块
+  - **features/schedule/widgets/**: 日程组件目录
+    - `schedule_card.dart`: 日程卡片组件，用于在列表中展示单个日程项
+    - `schedule_list_view.dart`: 日程列表视图组件，展示指定日期的日程列表
+    - `daily_schedule_view.dart`: 日视图日程展示组件
+    - `weekly_schedule_view.dart`: 周视图日程展示组件
+    - `monthly_schedule_view.dart`: 月视图日程展示组件
+    - `schedule_view_manager.dart`: 统一的视图管理组件，管理不同视图的显示和切换
+
+#### 共享目录 (shared/)
+- **shared/widgets/**: 共享组件目录
+  - `add_schedule_fab.dart`: 添加日程的浮动操作按钮组件
 
 ### 测试目录 (test/)
 - **widget_test.dart**: 组件测试文件，包含对应用UI组件的功能测试，验证计数器功能的正确性。
@@ -57,9 +79,16 @@
 ## 开发指南
 
 ### 代码编写位置
-所有Dart业务逻辑代码应放在 **lib/** 目录下。这是Flutter应用的核心源码目录，包含：
-- **main.dart**: 应用程序入口和主界面
-- 可创建子目录如 **screens/** (页面), **widgets/** (组件), **services/** (服务), **models/** (数据模型) 来组织代码
+所有Dart业务逻辑代码应放在 **lib/** 目录下。这是Flutter应用的核心源码目录，采用模块化结构组织：
+
+- **main.dart**: 应用程序入口点，配置全局主题和路由
+- **core/**: 核心模块，包含数据模型和服务
+  - **models/**: 数据模型
+  - **services/**: 业务服务
+- **features/**: 功能模块，按功能划分目录
+  - **calendar/**: 日历相关功能
+  - **schedule/**: 日程相关功能
+- **shared/**: 共享组件和常量
 
 ### 资源文件管理
 资源文件通过 **pubspec.yaml** 文件进行声明和管理：
@@ -99,7 +128,23 @@
 要添加新的功能模块，建议在 `lib/` 目录下创建相应的子目录和文件，遵循Dart语言规范和Flutter最佳实践。
 
 ## 功能概述
-该项目是一个基于Flutter框架的跨平台AI日程管理应用原型。当前实现了基础的计数器示例应用，展示了Flutter的核心特性，包括状态管理和Material Design组件。后续将在此基础上开发完整的日程管理功能，集成AI智能提醒和自然语言处理能力。
+该项目是一个基于Flutter框架的跨平台AI日程管理应用。当前已实现基础的日程管理功能，包括日程的添加、日历视图展示（日、周、月视图切换）以及手势操作支持。后续将在此基础上开发完整的日程管理功能，集成AI智能提醒和自然语言处理能力。
+
+## 功能列表
+- ✔ 基础日程管理（添加日程）
+- ✔ 日历视图展示（日、周、月视图切换）
+- ✔ 手势操作支持（上滑、下滑切换视图）
+- ✘ 日程编辑和删除功能
+- ✘ AI自然语言处理（零代码自然语言交互）
+- ✘ 模糊语义识别（精准识别模糊时间表述）
+- ✘ 个性化智能推荐（基于历史行为的智能推荐）
+- ✘ 权威数据聚合（教育部竞赛库、国际证书考试日历等）
+- ✘ 可视化成长路线（生成个性化成长路线图）
+- ✘ 多模态学习应用（图片日程信息识别）
+- ✘ 数据持久化存储
+- ✘ 通知系统
+## BUG
+-   周视图日程展示错误
 
 ## 快速开始
 1. 安装Flutter SDK

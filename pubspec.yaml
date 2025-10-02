@@ -30,6 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # table_calendar: 用于实现日历视图功能的第三方库
+  table_calendar: ^3.0.0
+  # intl: 用于国际化和日期格式化
+  intl: ^0.19.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
