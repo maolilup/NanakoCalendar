@@ -152,6 +152,132 @@
 3. 获取依赖：`flutter pub get`
 4. 运行应用：`flutter run`
 
+## 语法知识总结
+
+### 1. Dart语言特性详解
+
+#### 1.1 类和对象
+- **类定义**：使用`class`关键字定义类，如`Schedule`数据模型类
+- **属性定义**：使用`final`关键字定义不可变属性，如`final String id;`
+- **构造函数**：
+  - 普通构造函数：`Schedule({...})`
+  - 命名构造函数：`factory Schedule.fromJson(Map<String, dynamic> json)`
+  - 常量构造函数：组件中使用`const`构造函数优化性能
+- **方法定义**：在类中定义实例方法，如`Map<String, dynamic> toJson()`
+
+#### 1.2 空安全（Null Safety）
+- **可空类型**：使用`?`声明可空类型，如`DateTime? _selectedDay;`
+- **非空断言**：使用`!`操作符断言变量不为null，如`newValue!`
+- **空合并操作符**：使用`??`提供默认值，如`_selectedDay ?? DateTime.now()`
+
+#### 1.3 泛型（Generics）
+- **泛型集合**：`List<Schedule>`、`Map<String, dynamic>`
+- **泛型函数参数**：`Function(Schedule)`、`Function(String)`
+
+#### 1.4 函数和闭包
+- **函数定义**：普通函数如`List<Schedule> _getEventsForDay(DateTime day)`
+- **箭头函数**：简洁的单行函数，如`(context, day) => isSameDay(widget.selectedDay, day)`
+- **匿名函数**：作为参数传递的函数，如`(details) { ... }`
+- **高阶函数**：函数作为参数或返回值，如回调函数参数
+
+#### 1.5 异步编程
+- **Future和async/await**：处理异步操作，如`showDatePicker`返回Future
+- **异步初始化**：在`main()`函数中使用`initializeDateFormatting().then((_) { ... })`
+
+#### 1.6 集合操作
+- **List操作**：
+  - 创建：`List.generate()`、`List<Schedule> _schedules = []`
+  - 查询：`where()`、`indexWhere()`
+  - 修改：`add()`、`removeWhere()`
+- **Map操作**：
+  - 创建：`Map<String, dynamic>`
+  - 访问：`json['id']`
+  - 转换：`toJson()`方法返回Map
+
+#### 1.7 控制流程
+- **条件语句**：
+  - `if-else`语句：用于条件判断
+  - `switch-case`语句：如优先级颜色选择
+- **循环语句**：
+  - `for`循环：`for (int i = 0; i < length; i++)`
+  - `for-in`循环：遍历集合
+  - `List.generate()`：生成固定长度的列表
+
+#### 1.8 操作符
+- **级联操作符**：`..`用于链式调用（项目中未使用但常见）
+- **条件成员访问**：`?.`安全访问可能为null的对象成员
+- **类型检查**：`is`、`as`关键字
+
+### 2. Flutter框架特性详解
+
+#### 2.1 Widget系统
+- **StatelessWidget**：无状态组件，如`ScheduleCard`、`DailyScheduleView`
+- **StatefulWidget**：有状态组件，如`HomeScreen`、`CalendarWidget`
+- **State管理**：通过`State`类管理组件状态，如`_HomeScreenState`
+
+#### 2.2 布局组件
+- **基础布局**：
+  - `Column`：垂直布局组件
+  - `Row`：水平布局组件
+  - `Expanded`：扩展子组件填充可用空间
+  - `Container`：通用容器组件
+- **列表布局**：
+  - `ListView.builder`：动态构建列表项
+  - `GridView.builder`：网格布局
+- **特殊布局**：
+  - `Stack`：层叠布局（项目中未使用但常见）
+  - `Card`：卡片布局
+
+#### 2.3 交互组件
+- **手势处理**：
+  - `GestureDetector`：检测各种手势，如`onVerticalDragEnd`
+- **按钮组件**：
+  - `FloatingActionButton`：浮动操作按钮
+  - `TextButton`：文本按钮
+  - `PopupMenuButton`：弹出菜单按钮
+- **输入组件**：
+  - `TextField`：文本输入框
+  - `DropdownButtonFormField`：下拉选择框
+  - `AlertDialog`：对话框
+
+#### 2.4 数据展示组件
+- **文本展示**：
+  - `Text`：基本文本组件
+  - `TextStyle`：文本样式
+- **图标展示**：
+  - `Icon`：图标组件
+  - `Icons`：Material Icons图标库
+- **列表项**：
+  - `ListTile`：列表项组件
+
+#### 2.5 路由和导航
+- **页面导航**：
+  - `Navigator.of(context).pop()`：关闭当前页面
+  - `showDialog`：显示对话框
+  - `showDatePicker`：显示日期选择器
+
+#### 2.6 主题和样式
+- **MaterialApp**：应用根组件，配置主题
+- **Theme.of(context)**：获取主题数据
+- **ColorScheme`：颜色方案
+- **BoxDecoration`：装饰盒子
+
+#### 2.7 生命周期方法
+- **initState()**：组件初始化时调用
+- **didUpdateWidget()**：组件更新时调用
+- **build()**：构建UI组件树
+
+### 3. 第三方库使用详解
+
+#### 3.1 table_calendar
+- **TableCalendar**：功能完整的日历组件
+- **CalendarFormat**：日历格式（月视图、周视图）
+- **isSameDay()**：比较两个日期是否为同一天
+
+#### 3.2 intl
+- **initializeDateFormatting()**：初始化日期格式化
+- **本地化支持**：支持多语言日期显示
+
 ## 参考资源
 - [Flutter官方文档](https://docs.flutter.dev/)
 - [编写你的第一个Flutter应用](https://docs.flutter.dev/get-started/codelab)
