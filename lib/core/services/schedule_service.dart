@@ -1,45 +1,46 @@
 import '../models/schedule.dart';
+import '../database/database_helper.dart';
 
 /// 日程管理服务类
 /// 负责处理日程的增删改查等业务逻辑
 class ScheduleService {
-  /// 内存中的日程列表，用于模拟数据存储
-  List<Schedule> _schedules = [];
+  /// 数据库助手实例
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
   /// 获取所有日程
   /// 返回当前所有日程的列表副本
-  List<Schedule> getAllSchedules() {
-    return _schedules;
+  Future<List<Schedule>> getAllSchedules() async {
+    return await _dbHelper.getAllSchedules();
   }
 
   /// 添加新日程
   /// [schedule] 要添加的日程对象
-  void addSchedule(Schedule schedule) {
-    _schedules.add(schedule);
+  Future<void> addSchedule(Schedule schedule) async {
+    await _dbHelper.insertSchedule(schedule);
   }
 
   /// 更新现有日程
   /// [updatedSchedule] 包含更新信息的日程对象
-  void updateSchedule(Schedule updatedSchedule) {
-    // 查找要更新的日程在列表中的索引
-    int index = _schedules.indexWhere((schedule) => schedule.id == updatedSchedule.id);
-    // 如果找到了该日程，则替换它
-    if (index != -1) {
-      _schedules[index] = updatedSchedule;
-    }
+  Future<void> updateSchedule(Schedule updatedSchedule) async {
+    await _dbHelper.updateSchedule(updatedSchedule);
   }
 
   /// 删除指定ID的日程
   /// [id] 要删除的日程的唯一标识符
-  void deleteSchedule(String id) {
-    // 从列表中移除指定ID的日程
-    _schedules.removeWhere((schedule) => schedule.id == id);
+  Future<void> deleteSchedule(String id) async {
+    await _dbHelper.deleteSchedule(id);
   }
 
   /// 初始化示例数据
   /// 用于演示和测试目的，添加一些预设的日程项
-  void initializeSampleData() {
-    _schedules = [
+  Future<void> initializeSampleData() async {
+    // 检查是否已有数据
+    final existingSchedules = await getAllSchedules();
+    if (existingSchedules.isNotEmpty) {
+      return; // 如果已有数据，则不初始化示例数据
+    }
+    
+    final schedules = [
       Schedule(
         id: '1',
         title: '团队会议',
@@ -57,5 +58,10 @@ class ScheduleService {
         category: '学习',
       ),
     ];
+    
+    // 插入示例数据
+    for (var schedule in schedules) {
+      await addSchedule(schedule);
+    }
   }
 }

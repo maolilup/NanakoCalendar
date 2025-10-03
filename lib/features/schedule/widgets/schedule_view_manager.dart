@@ -101,6 +101,8 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
     super.initState();
     _calendarFormat = widget.initialView;
     _selectedDay = _focusedDay;
+    // 加载日程数据
+    _loadSchedules();
   }
 
   /// 当组件的配置发生变化时调用
@@ -117,19 +119,24 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
     }
   }
 
+  /// 存储缓存的日程数据
+  List<Schedule> _cachedSchedules = [];
+
+  /// 获取所有日程（缓存版本）
+  Future<void> _loadSchedules() async {
+    _cachedSchedules = await _scheduleService.getAllSchedules();
+  }
+
   /// 获取指定日期的日程
   ///
-  /// 从日程服务中获取所有日程数据，然后筛选出与指定日期同一天的日程
+  /// 从缓存的日程数据中筛选出与指定日期同一天的日程
   /// 使用 table_calendar 包的 isSameDay 函数来比较日期是否为同一天
   ///
   /// [day] 指定的日期
   /// 返回该日期的所有日程列表
   List<Schedule> _getEventsForDay(DateTime day) {
-    // 从日程服务中获取所有日程
-    final schedules = _scheduleService.getAllSchedules();
-
-    // 筛选出与指定日期同一天的日程
-    return schedules.where((schedule) {
+    // 从缓存中筛选出与指定日期同一天的日程
+    return _cachedSchedules.where((schedule) {
       return isSameDay(schedule.dateTime, day);
     }).toList();
   }
@@ -146,12 +153,17 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
 
   /// 构建月视图内容
   Widget _buildMonthlyView() {
-    return MonthlyScheduleView(
+    final monthlyView = MonthlyScheduleView(
       selectedDay: _selectedDay ?? DateTime.now(),
       scheduleService: _scheduleService,
       onEdit: (schedule) {},
       onDelete: (id) {},
     );
+    
+    // 传递缓存数据到月视图
+    monthlyView.loadSchedules(_cachedSchedules);
+    
+    return monthlyView;
   }
 
   /// 构建周视图内容
@@ -166,18 +178,24 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
       onDelete: (id) {},
       onSwipeUp: widget.onSwipeUp,
       onSwipeDown: widget.onSwipeDown ?? _defaultOnSwipeDown,
+      cachedSchedules: _cachedSchedules,
     );
   }
 
   /// 构建日视图内容
   Widget _buildDailyView() {
-    return DailyScheduleView(
+    final dailyView = DailyScheduleView(
       selectedDay: _selectedDay ?? DateTime.now(),
       scheduleService: _scheduleService,
       onEdit: (schedule) {},
       onDelete: (id) {},
       onSwipeDown: widget.onSwipeDown ?? _defaultOnSwipeDown,
     );
+    
+    // 传递缓存数据到日视图
+    dailyView.loadSchedules(_cachedSchedules);
+    
+    return dailyView;
   }
 
   /// 构建视图内容

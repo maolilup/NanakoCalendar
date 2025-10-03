@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/schedule.dart';
 import '../../../core/services/schedule_service.dart';
-import 'schedule_card.dart';
 import 'monthly_schedule_view.dart';
 
 /// 日程列表视图组件

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/models/schedule.dart';
 import '../../schedule/widgets/schedule_list_view.dart';
-import '../../calendar/widgets/calendar_widget.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../shared/widgets/add_schedule_fab.dart';
 import '../../schedule/widgets/schedule_view_manager.dart';
@@ -29,6 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  
+  /// 视图历史记录
+  final List<CalendarFormat> _viewHistory = [CalendarFormat.month];
 
   /// 初始化状态
   /// 在页面创建时初始化示例数据，并设置默认选中日期为今天
@@ -36,8 +38,38 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    _scheduleService.initializeSampleData();
+    _initializeData();
     _selectedDay = _focusedDay;
+  }
+
+  /// 初始化数据
+  Future<void> _initializeData() async {
+    await _scheduleService.initializeSampleData();
+  }
+
+  /// 处理返回操作
+  Future<bool> _onWillPop() async {
+    // 如果有视图历史记录且当前不是月视图，则返回到上一个视图
+    if (_viewHistory.length > 1 && _calendarFormat != CalendarFormat.month) {
+      setState(() {
+        // 移除当前视图
+        _viewHistory.removeLast();
+        // 获取上一个视图
+        _calendarFormat = _viewHistory.last;
+      });
+      return false; // 不退出应用
+    } 
+    // 如果当前是月视图且有历史记录，则移除月视图记录但不退出
+    else if (_viewHistory.length > 1 && _calendarFormat == CalendarFormat.month) {
+      setState(() {
+        _viewHistory.removeLast();
+      });
+      return false; // 不退出应用
+    }
+    // 如果只有一种视图或没有历史记录，则退出应用
+    else {
+      return true; // 退出应用
+    }
   }
 
   /// 构建页面UI
@@ -50,39 +82,60 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Nanako Calendar'),
       ),
       // 页面主体内容
-      body: ScheduleViewManager(
-        initialView: _calendarFormat,
-        onFormatChanged: (format) {
-          setState(() {
-            _calendarFormat = format;
-          });
+      body: PopScope(
+        canPop: false,
+        onPopInvoked: (bool didPop) async {
+          if (didPop) return;
+          final shouldPop = await _onWillPop();
+          if (shouldPop && context.mounted) {
+            Navigator.of(context).pop();
+          }
         },
-        onDaySelected: (selectedDay, focusedDay) {
-          setState(() {
-            _selectedDay = selectedDay;
-            _focusedDay = focusedDay;
-          });
-        },
-        onPageChanged: (focusedDay) {
-          setState(() {
-            _focusedDay = focusedDay;
-          });
-        },
-        onSwipeUp: () {
-          // 上滑时切换到月视图
-          if (_calendarFormat != CalendarFormat.week) {
+        child: ScheduleViewManager(
+          initialView: _calendarFormat,
+          onFormatChanged: (format) {
+            // 更新视图历史记录
+            if (_viewHistory.isEmpty || _viewHistory.last != format) {
+              setState(() {
+                _viewHistory.add(format);
+                // 限制历史记录数量为10
+                if (_viewHistory.length > 10) {
+                  _viewHistory.removeAt(0);
+                }
+              });
+            }
+            
+            setState(() {
+              _calendarFormat = format;
+            });
+          },
+          onDaySelected: (selectedDay, focusedDay) {
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            });
+          },
+          onPageChanged: (focusedDay) {
+            setState(() {
+              _focusedDay = focusedDay;
+            });
+          },
+          onSwipeUp: () {
+            // 上滑时切换到月视图
+            if (_calendarFormat != CalendarFormat.week) {
+              setState(() {
+                _calendarFormat = CalendarFormat.month;
+              });
+            }
+          },
+          onSwipeDown: () {
+            // 下滑时切换到月视图
+            print('HomeScreen: 检测到下滑手势，切换到月视图');
             setState(() {
               _calendarFormat = CalendarFormat.month;
             });
-          }
-        },
-        onSwipeDown: () {
-          // 下滑时切换到月视图
-          print('HomeScreen: 检测到下滑手势，切换到月视图');
-          setState(() {
-            _calendarFormat = CalendarFormat.month;
-          });
-        },
+          },
+        ),
       ),
       // 浮动操作按钮
       floatingActionButton: AddScheduleFloatingActionButton(
@@ -94,8 +147,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 获取指定日期的日程
   /// [day] 指定的日期
   /// 返回该日期的所有日程列表
-  List<Schedule> _getEventsForDay(DateTime day) {
-    final schedules = _scheduleService.getAllSchedules();
+  Future<List<Schedule>> _getEventsForDay(DateTime day) async {
+    final schedules = await _scheduleService.getAllSchedules();
     // 使用isSameDay函数过滤出与指定日期相同的日程
     return schedules.where((schedule) {
       return isSameDay(schedule.dateTime, day);

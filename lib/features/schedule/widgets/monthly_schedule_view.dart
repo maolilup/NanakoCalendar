@@ -12,7 +12,7 @@ class MonthlyScheduleView extends StatelessWidget {
   /// [scheduleService] 日程服务实例
   /// [onEdit] 编辑日程回调函数
   /// [onDelete] 删除日程回调函数
-  const MonthlyScheduleView({
+  MonthlyScheduleView({
     super.key,
     required this.selectedDay,
     required this.scheduleService,
@@ -32,14 +32,21 @@ class MonthlyScheduleView extends StatelessWidget {
   /// 删除日程回调函数
   final void Function(String id) onDelete;
 
+  /// 存储缓存的日程数据
+  List<Schedule> _cachedSchedules = [];
+
+  /// 加载日程数据
+  void loadSchedules(List<Schedule> schedules) {
+    _cachedSchedules = schedules;
+  }
+
   /// 获取指定日期的日程
   /// [day] 指定的日期
   /// [service] 日程服务实例
   /// 返回该日期的所有日程列表
   List<Schedule> _getEventsForDay(DateTime day, ScheduleService service) {
-    final schedules = service.getAllSchedules();
     // 使用isSameDay函数过滤出与指定日期相同的日程
-    return schedules.where((schedule) {
+    return _cachedSchedules.where((schedule) {
       return isSameDay(schedule.dateTime, day);
     }).toList();
   }
@@ -47,6 +54,7 @@ class MonthlyScheduleView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 获取选定日期的日程
+    
     final schedules = _getEventsForDay(selectedDay, scheduleService);
 
     // 如果没有日程，显示提示信息

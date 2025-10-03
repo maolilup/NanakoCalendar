@@ -13,7 +13,7 @@ class DailyScheduleView extends StatelessWidget {
   /// [onEdit] 编辑日程回调函数
   /// [onDelete] 删除日程回调函数
   /// [onSwipeDown] 下滑回调函数
-  const DailyScheduleView({
+  DailyScheduleView({
     super.key,
     required this.selectedDay,
     required this.scheduleService,
@@ -80,13 +80,20 @@ class DailyScheduleView extends StatelessWidget {
     );
   }
 
+  /// 存储缓存的日程数据
+  List<Schedule> _cachedSchedules = [];
+
+  /// 加载日程数据
+  void loadSchedules(List<Schedule> schedules) {
+    _cachedSchedules = schedules;
+  }
+
   /// 获取指定日期的日程
   /// [day] 指定的日期
   /// 返回该日期的所有日程列表
   List<Schedule> _getEventsForDay(DateTime day) {
-    final allSchedules = scheduleService.getAllSchedules();
     // 使用isSameDay函数过滤出与指定日期相同的日程
-    return allSchedules.where((schedule) {
+    return _cachedSchedules.where((schedule) {
       return isSameDay(schedule.dateTime, day);
     }).toList();
   }

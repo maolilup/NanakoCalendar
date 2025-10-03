@@ -10,24 +10,27 @@ import '../../../core/services/schedule_service.dart';
 class WeeklyScheduleView extends StatelessWidget {
   /// 当前聚焦的日期（用于确定周的范围）
   final DateTime focusedDay;
-  
+
   /// 日程服务实例
   final ScheduleService scheduleService;
-  
+
   /// 编辑日程的回调函数
   final Function(Schedule) onEdit;
-  
+
   /// 删除日程的回调函数
   final Function(String) onDelete;
-  
+
   /// 上滑回调函数
   final VoidCallback? onSwipeUp;
 
   /// 下滑回调函数
   final VoidCallback? onSwipeDown;
 
+  /// 缓存的日程数据
+  final List<Schedule>? cachedSchedules;
+
   /// 构造函数
-  const WeeklyScheduleView({
+  WeeklyScheduleView({
     super.key,
     required this.focusedDay,
     required this.scheduleService,
@@ -35,6 +38,7 @@ class WeeklyScheduleView extends StatelessWidget {
     required this.onDelete,
     this.onSwipeUp,
     this.onSwipeDown,
+    this.cachedSchedules,
   });
 
   /// 获取一周的开始日期（周一）
@@ -48,12 +52,20 @@ class WeeklyScheduleView extends StatelessWidget {
     return date.subtract(Duration(days: daysToSubtract));
   }
 
+  /// 存储缓存的日程数据
+  List<Schedule> _cachedSchedules = [];
+
+  /// 加载日程数据
+  void _loadSchedules(List<Schedule> schedules) {
+    _cachedSchedules = schedules;
+  }
+
   /// 获取指定日期的日程
   ///
-  /// 从日程服务中获取所有日程，然后筛选出与指定日期同一天的日程
+  /// 从缓存的日程数据中筛选出与指定日期同一天的日程
   /// 使用table_calendar包的isSameDay函数来比较日期是否为同一天
   List<Schedule> _getEventsForDay(DateTime day) {
-    final schedules = scheduleService.getAllSchedules();
+    final schedules = cachedSchedules ?? _cachedSchedules;
     return schedules.where((schedule) {
       return isSameDay(schedule.dateTime, day);
     }).toList();
@@ -63,93 +75,289 @@ class WeeklyScheduleView extends StatelessWidget {
   Widget build(BuildContext context) {
     // 计算本周的开始日期（周一）
     final startOfWeek = _getStartOfWeek(focusedDay);
-    
+
     // 生成一周7天的日期列表
     final List<DateTime> weekDays = List.generate(
       7,
       (index) => startOfWeek.add(Duration(days: index)),
     );
-    
+
+    // 生成24小时的时间列表
+    final List<int> hours = List.generate(24, (index) => index);
+
     // 星期几的中文名称
     final List<String> weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-    // 使用手势检测器包装整个组件，用于检测下滑手势
-    return GestureDetector(
-      // 垂直拖拽结束时的回调函数，用于检测下滑手势
-      onVerticalDragEnd: (details) {
-        // 检测下滑手势（垂直拖拽结束时，velocity.pixelsPerSecond.dy为正值表示向下滑动）
-        if (details.velocity.pixelsPerSecond.dy > 300) {
-          // 添加调试日志
-          print('WeeklyScheduleView: 检测到下滑手势, velocity: ${details.velocity.pixelsPerSecond.dy}');
-          onSwipeDown?.call();
-        }
-        // 检测上滑手势（垂直拖拽结束时，velocity.pixelsPerSecond.dy为负值表示向上滑动）
-        else if (details.velocity.pixelsPerSecond.dy < -300) {
-          // 添加调试日志
-          print('WeeklyScheduleView: 检测到上滑手势, velocity: ${details.velocity.pixelsPerSecond.dy}');
-          onSwipeUp?.call();
-        }
-      },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 左侧星期列表：显示周一到周日的文本标签
-          SizedBox(
-            width: 50,
-            child: Column(
-              children: List.generate(7, (index) {
-                return Expanded(
-                  child: Container(
-                    alignment: Alignment.center,
+    // 创建一个ScrollController用于同步滚动
+    final ScrollController scrollController = ScrollController();
+
+    return Column(
+      children: [
+        // 顶部工具栏，包含返回按钮
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // 返回按钮
+            IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                // 调用返回回调函数
+                onSwipeDown?.call();
+              },
+            ),
+            // 标题
+            Text(
+              '周视图',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            // 占位符，用于保持标题居中
+            IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.transparent),
+              onPressed: null,
+            ),
+          ],
+        ),
+        // 创建一个大的整体组件，包含时间轴、星期表和日程区域
+        Expanded(
+          child: _WeeklyScheduleContent(
+            weekDays: weekDays,
+            weekdays: weekdays,
+            scrollController: scrollController,
+            getEventsForDay: _getEventsForDay,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 大组件：包含时间轴、星期表和日程区域
+class _WeeklyScheduleContent extends StatefulWidget {
+  final List<DateTime> weekDays;
+  final List<String> weekdays;
+  final ScrollController scrollController;
+  final List<Schedule> Function(DateTime) getEventsForDay;
+
+  const _WeeklyScheduleContent({
+    required this.weekDays,
+    required this.weekdays,
+    required this.scrollController,
+    required this.getEventsForDay,
+  });
+
+  @override
+  _WeeklyScheduleContentState createState() => _WeeklyScheduleContentState();
+}
+
+class _WeeklyScheduleContentState extends State<_WeeklyScheduleContent> {
+  late ScrollController _horizontalScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _horizontalScrollController = ScrollController();
+    // 同步滚动控制器
+    widget.scrollController.addListener(_syncScroll);
+  }
+
+  void _syncScroll() {
+    if (_horizontalScrollController.hasClients) {
+      _horizontalScrollController.jumpTo(widget.scrollController.offset);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.scrollController.removeListener(_syncScroll);
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // 时间轴（24小时）
+        Container(
+          height: 50,
+          child: Row(
+            children: [
+              // 左上角占位符
+              Container(
+                width: 50,
+                child: Center(
+                  child: Text(
+                    '时间',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              // 时间刻度
+              Expanded(
+                child: ListView.builder(
+                  controller: widget.scrollController,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 24,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: 60,
+                      child: Center(
+                        child: Text(
+                          '${index}:00',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        // 整合的星期表和日程区域组件
+        Expanded(
+          child: _ScheduleAndWeekdaysContent(
+            weekDays: widget.weekDays,
+            weekdays: widget.weekdays,
+            scrollController: _horizontalScrollController,
+            getEventsForDay: widget.getEventsForDay,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 整合的星期表和日程区域组件
+class _ScheduleAndWeekdaysContent extends StatelessWidget {
+  final List<DateTime> weekDays;
+  final List<String> weekdays;
+  final ScrollController scrollController;
+  final List<Schedule> Function(DateTime) getEventsForDay;
+
+  const _ScheduleAndWeekdaysContent({
+    required this.weekDays,
+    required this.weekdays,
+    required this.scrollController,
+    required this.getEventsForDay,
+  });
+
+  // 定义一些颜色用于区分不同的日程
+  static final List<Color> scheduleColors = [
+    Color(0xFFBBDEFB), // blue.shade100
+    Color(0xFFC8E6C9), // green.shade100
+    Color(0xFFFFE0B2), // orange.shade100
+    Color(0xFFF3E5F5), // purple.shade100
+    Color(0xFFFFCDD2), // red.shade100
+    Color(0xFFB2DFDB), // teal.shade100
+    Color(0xFFF8BBD0), // pink.shade100
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 左侧星期列表
+        Container(
+          width: 50,
+          child: Column(
+            children: List.generate(7, (index) {
+              return Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Color(0xFFE0E0E0), // grey.shade300
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: Center(
                     child: Text(
                       weekdays[index],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                );
-              }),
-            ),
+                ),
+              );
+            }),
           ),
-          // 右侧日程方格：使用GridView构建7列的日程网格
-          Expanded(
-            child: GridView.builder(
-              // 网格代理，设置为固定列数的网格布局
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7, // 7列，对应一周7天
-                crossAxisSpacing: 1, // 列间距
-                mainAxisSpacing: 1, // 行间距
-                childAspectRatio: 0.7, // 调整方格的宽高比
-              ),
-              // 禁用 GridView 的滚动，避免与手势检测冲突
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 7, // 总共7个子项，对应一周7天
-              itemBuilder: (context, index) {
-                // 获取当前索引对应的日期
-                final day = weekDays[index];
-                // 获取该日期的所有日程
-                final schedules = _getEventsForDay(day);
-                
-                // 构建单天日程卡片组件
-                return _DayScheduleCard(
-                  day: day,
-                  schedules: schedules,
-                  onEdit: onEdit,
-                  onDelete: onDelete,
+        ),
+        // 右侧日程内容（一周作为一个整体）
+        Expanded(
+          child: Container(
+            child: ListView.builder(
+              controller: scrollController,
+              scrollDirection: Axis.horizontal,
+              itemCount: 24,
+              itemBuilder: (context, hourIndex) {
+                return Container(
+                  width: 60,
+                  child: Column(
+                    children: List.generate(7, (dayIndex) {
+                      final day = weekDays[dayIndex];
+                      final schedules = getEventsForDay(day);
+
+                      // 获取当前小时的日程
+                      final hourSchedules = schedules.where((schedule) {
+                        return schedule.dateTime.hour == hourIndex;
+                      }).toList();
+
+                      return Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: hourSchedules.isEmpty
+                                ? Colors.transparent
+                                : scheduleColors[dayIndex %
+                                      scheduleColors.length],
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Color(0xFFE0E0E0), // grey.shade300
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                          child: hourSchedules.isEmpty
+                              ? null // 无日程时显示空白
+                              : Column(
+                                  children: hourSchedules.map((schedule) {
+                                    return Expanded(
+                                      child: Container(
+                                        padding: EdgeInsets.all(2),
+                                        child: Text(
+                                          schedule.title,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                        ),
+                      );
+                    }),
+                  ),
                 );
               },
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
 /// 单天日程方格组件
-///
 /// 用于展示单天的日程信息，以卡片形式呈现
 /// 包含日期标题、分隔线和日程列表三个部分
 class _DayScheduleCard extends StatelessWidget {
@@ -175,6 +383,7 @@ class _DayScheduleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
+      shape: Border.fromBorderSide(BorderSide.none),
       child: Container(
         padding: const EdgeInsets.all(2),
         child: Column(
@@ -192,35 +401,32 @@ class _DayScheduleCard extends StatelessWidget {
                 ),
               ),
             ),
-            // 分隔线：用于分隔日期标题和日程列表
-            const Divider(height: 1, thickness: 1),
             // 日程列表：显示当天的日程，最多显示4个
             Expanded(
               child: schedules.isEmpty
-                  // 如果没有日程，显示"无日程"提示
                   ? const Center(
                       child: Text(
                         '无日程',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     )
                   // 如果有日程，使用ListView.builder构建日程列表
                   : ListView.builder(
                       padding: EdgeInsets.zero,
-                      itemCount: schedules.length > 4 ? 4 : schedules.length, // 最多显示4个日程
+                      itemCount: schedules.length > 4
+                          ? 4
+                          : schedules.length, // 最多显示4个日程
                       itemBuilder: (context, index) {
                         final schedule = schedules[index];
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 1,
+                            vertical: 0.5,
+                          ),
                           child: Text(
                             schedule.title,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 8,
-                            ),
+                            style: const TextStyle(fontSize: 8),
                           ),
                         );
                       },
