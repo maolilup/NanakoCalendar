@@ -33,11 +33,12 @@ class ScheduleListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 直接返回月度日程视图组件，并传递必要的参数
     return MonthlyScheduleView(
-      selectedDay: selectedDay,
-      scheduleService: scheduleService,
-      onEdit: onEdit,
-      onDelete: onDelete,
+      selectedDay: selectedDay,        // 传递选中的日期
+      scheduleService: scheduleService, // 传递日程服务实例
+      onEdit: onEdit,                  // 传递编辑回调函数
+      onDelete: onDelete,              // 传递删除回调函数
     );
   }
 }

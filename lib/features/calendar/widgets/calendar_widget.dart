@@ -79,7 +79,10 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       // focusedDay表示当前聚焦的日期，决定日历显示哪个月份/周
       focusedDay: widget.focusedDay,
       // selectedDayPredicate用于确定哪些日期被选中，返回true的日期会高亮显示
-      selectedDayPredicate: (day) => isSameDay(widget.selectedDay, day),
+      selectedDayPredicate: (day) {
+        // 使用isSameDay函数检查日期是否相同
+        return isSameDay(widget.selectedDay, day);
+      },
       // calendarFormat控制日历显示格式，支持月视图和周视图
       calendarFormat: widget.calendarFormat,
       // eventLoader用于加载指定日期的事件，返回该日期的所有日程安排
@@ -107,7 +110,9 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       // 自定义星期标题，将英文星期转换为中文显示
       daysOfWeekStyle: DaysOfWeekStyle(
         dowTextFormatter: (date, locale) {
+          // 定义中文星期名称数组
           final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+          // 根据日期的星期几返回对应的中文名称
           return weekdays[date.weekday - 1];
         },
       ),
@@ -115,9 +120,11 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       calendarBuilders: CalendarBuilders(
         // 自定义星期标题构建器
         dowBuilder: (context, day) {
+          // 定义简短的中文星期名称数组
           final weekdays = ['一', '二', '三', '四', '五', '六', '日'];
           return Center(
             child: Text(
+              // 根据日期的星期几返回对应的简短中文名称
               weekdays[day.weekday - 1],
               style: const TextStyle(fontSize: 12),
             ),
@@ -126,16 +133,31 @@ class _CalendarWidgetState extends State<CalendarWidget> {
         // 根据日历格式决定是否显示日期内容
         defaultBuilder: (context, day, focusedDay) {
           // 周视图下不显示日期内容，月视图下正常显示
+          // 如果是周视图，返回null表示不自定义日期显示
+          if (widget.calendarFormat == CalendarFormat.week) {
+            return null;
+          }
+          // 月视图下使用默认显示
           return null;
         },
         // 选中日期的构建器
         selectedBuilder: (context, day, focusedDay) {
           // 周视图下不显示选中状态，月视图下正常显示
+          // 如果是周视图，返回null表示不自定义选中日期显示
+          if (widget.calendarFormat == CalendarFormat.week) {
+            return null;
+          }
+          // 月视图下使用默认选中状态显示
           return null;
         },
         // 今天日期的构建器
         todayBuilder: (context, day, focusedDay) {
           // 周视图下不显示今天状态，月视图下正常显示
+          // 如果是周视图，返回null表示不自定义今天日期显示
+          if (widget.calendarFormat == CalendarFormat.week) {
+            return null;
+          }
+          // 月视图下使用默认今天状态显示
           return null;
         },
       ),
@@ -145,6 +167,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       // onFormatChanged处理日历格式切换事件
       // 当用户点击右上角的格式切换按钮时触发，用于在月视图和周视图之间切换
       onFormatChanged: (format) {
+        // 调用widget.onFormatChanged回调函数，传递新的格式和上下文
         widget.onFormatChanged(format, context);
       },
       // onPageChanged处理页面切换事件

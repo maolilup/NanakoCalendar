@@ -28,6 +28,8 @@ class ScheduleViewManager extends StatefulWidget {
     this.onPageChanged,
     this.onSwipeUp,
     this.onSwipeDown,
+    this.onEdit,
+    this.onDelete,
   });
 
   /// 初始视图格式
@@ -69,15 +71,27 @@ class ScheduleViewManager extends StatefulWidget {
   /// 当用户在组件上执行下滑手势时触发的回调函数
   final VoidCallback? onSwipeDown;
 
+  /// 编辑日程回调函数
+  ///
+  /// 当用户选择编辑日程时触发的回调函数
+  /// [Schedule] 参数表示要编辑的日程对象
+  final Function(Schedule)? onEdit;
+
+  /// 删除日程回调函数
+  ///
+  /// 当用户选择删除日程时触发的回调函数
+  /// [String] 参数表示要删除的日程ID
+  final Function(String)? onDelete;
+
   @override
-  State<ScheduleViewManager> createState() => _ScheduleViewManagerState();
+  State<ScheduleViewManager> createState() => ScheduleViewManagerState();
 }
 
 /// 视图管理器状态类
 ///
 /// 管理 ScheduleViewManager 组件的所有状态，包括日历格式、聚焦日期、选中日期等。
 /// 还负责构建不同视图的内容和处理用户交互事件。
-class _ScheduleViewManagerState extends State<ScheduleViewManager> {
+class ScheduleViewManagerState extends State<ScheduleViewManager> {
   /// 日程服务实例
   ///
   /// 用于获取和管理日程数据的服务实例
@@ -127,6 +141,13 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
     _cachedSchedules = await _scheduleService.getAllSchedules();
   }
 
+  /// 刷新缓存数据
+  Future<void> refreshSchedules() async {
+    await _loadSchedules();
+    // 重新构建视图
+    setState(() {});
+  }
+
   /// 获取指定日期的日程
   ///
   /// 从缓存的日程数据中筛选出与指定日期同一天的日程
@@ -135,10 +156,18 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
   /// [day] 指定的日期
   /// 返回该日期的所有日程列表
   List<Schedule> _getEventsForDay(DateTime day) {
-    // 从缓存中筛选出与指定日期同一天的日程
-    return _cachedSchedules.where((schedule) {
-      return isSameDay(schedule.dateTime, day);
-    }).toList();
+    // 创建一个空列表来存储指定日期的日程
+    List<Schedule> events = [];
+    // 遍历缓存的所有日程
+    for (int i = 0; i < _cachedSchedules.length; i++) {
+      Schedule schedule = _cachedSchedules[i];
+      // 使用isSameDay函数检查日期是否相同
+      if (isSameDay(schedule.dateTime, day)) {
+        events.add(schedule);
+      }
+    }
+    // 返回指定日期的日程列表
+    return events;
   }
 
   /// 默认的下滑回调函数
@@ -156,8 +185,8 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
     final monthlyView = MonthlyScheduleView(
       selectedDay: _selectedDay ?? DateTime.now(),
       scheduleService: _scheduleService,
-      onEdit: (schedule) {},
-      onDelete: (id) {},
+      onEdit: widget.onEdit ?? (schedule) {},
+      onDelete: widget.onDelete ?? (id) {},
     );
     
     // 传递缓存数据到月视图
@@ -174,8 +203,8 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
     return WeeklyScheduleView(
       focusedDay: _focusedDay,
       scheduleService: _scheduleService,
-      onEdit: (schedule) {},
-      onDelete: (id) {},
+      onEdit: widget.onEdit ?? (schedule) {},
+      onDelete: widget.onDelete ?? (id) {},
       onSwipeUp: widget.onSwipeUp,
       onSwipeDown: widget.onSwipeDown ?? _defaultOnSwipeDown,
       cachedSchedules: _cachedSchedules,
@@ -187,8 +216,8 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
     final dailyView = DailyScheduleView(
       selectedDay: _selectedDay ?? DateTime.now(),
       scheduleService: _scheduleService,
-      onEdit: (schedule) {},
-      onDelete: (id) {},
+      onEdit: widget.onEdit ?? (schedule) {},
+      onDelete: widget.onDelete ?? (id) {},
       onSwipeDown: widget.onSwipeDown ?? _defaultOnSwipeDown,
     );
     
@@ -207,17 +236,16 @@ class _ScheduleViewManagerState extends State<ScheduleViewManager> {
   ///
   /// 每个视图组件都会传递相应的参数，包括日期、日程服务实例和回调函数
   Widget _buildViewContent() {
-    switch (_calendarFormat) {
+    // 根据当前的日历格式返回相应的视图组件
+    if (_calendarFormat == CalendarFormat.month) {
       // 月视图：显示月度日程概览
-      case CalendarFormat.month:
-        return _buildMonthlyView();
+      return _buildMonthlyView();
+    } else if (_calendarFormat == CalendarFormat.week) {
       // 周视图：显示周度日程详情
-      case CalendarFormat.week:
-        return _buildWeeklyView();
+      return _buildWeeklyView();
+    } else {
       // 默认使用日视图：显示每日日程详情
-      default:
-        // 默认使用日视图
-        return _buildDailyView();
+      return _buildDailyView();
     }
   }
 

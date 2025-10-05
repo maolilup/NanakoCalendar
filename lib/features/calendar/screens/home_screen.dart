@@ -29,6 +29,10 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   
+  /// 视图管理器key
+  final GlobalKey<ScheduleViewManagerState> _viewManagerKey =
+      GlobalKey<ScheduleViewManagerState>();
+
   /// 视图历史记录
   final List<CalendarFormat> _viewHistory = [CalendarFormat.month];
 
@@ -92,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
         child: ScheduleViewManager(
+          key: _viewManagerKey,
           initialView: _calendarFormat,
           onFormatChanged: (format) {
             // 更新视图历史记录
@@ -135,6 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
               _calendarFormat = CalendarFormat.month;
             });
           },
+          onEdit: _editSchedule,
+          onDelete: _confirmDeleteSchedule,
         ),
       ),
       // 浮动操作按钮
@@ -148,11 +155,20 @@ class _HomeScreenState extends State<HomeScreen> {
   /// [day] 指定的日期
   /// 返回该日期的所有日程列表
   Future<List<Schedule>> _getEventsForDay(DateTime day) async {
+    // 获取所有日程
     final schedules = await _scheduleService.getAllSchedules();
-    // 使用isSameDay函数过滤出与指定日期相同的日程
-    return schedules.where((schedule) {
-      return isSameDay(schedule.dateTime, day);
-    }).toList();
+    // 创建一个空列表来存储指定日期的日程
+    List<Schedule> events = [];
+    // 遍历所有日程，找出与指定日期相同的日程
+    for (int i = 0; i < schedules.length; i++) {
+      Schedule schedule = schedules[i];
+      // 使用isSameDay函数检查日期是否相同
+      if (isSameDay(schedule.dateTime, day)) {
+        events.add(schedule);
+      }
+    }
+    // 返回指定日期的日程列表
+    return events;
   }
 
   /// 构建日程列表
@@ -172,6 +188,12 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _scheduleService.addSchedule(schedule);
     });
+    // 刷新视图
+    _viewManagerKey.currentState?.refreshSchedules();
+    // 显示添加成功的提示
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('日程添加成功')),
+    );
   }
 
   /// 编辑日程
@@ -180,6 +202,12 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _scheduleService.updateSchedule(updatedSchedule);
     });
+    // 刷新视图
+    _viewManagerKey.currentState?.refreshSchedules();
+    // 显示编辑成功的提示
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('日程更新成功')),
+    );
   }
 
   /// 删除日程
@@ -188,6 +216,42 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _scheduleService.deleteSchedule(id);
     });
+    // 刷新视图
+    _viewManagerKey.currentState?.refreshSchedules();
+    // 显示删除成功的提示
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('日程删除成功')),
+    );
+  }
+
+  /// 确认删除日程
+  /// [id] 要删除的日程ID
+  void _confirmDeleteSchedule(String id) {
+    // 显示确认对话框
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('确认删除'),
+          content: const Text('确定要删除这个日程吗？'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 关闭对话框
+              },
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 关闭对话框
+                _deleteSchedule(id); // 执行删除操作
+              },
+              child: const Text('确定'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   /// 显示添加/编辑日程对话框

@@ -28,18 +28,15 @@ class ScheduleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // 根据优先级确定颜色
     Color priorityColor;
-    switch (schedule.priority) {
-      case 1:
-        priorityColor = Colors.green;  // 低优先级 - 绿色
-        break;
-      case 2:
-        priorityColor = Colors.orange; // 中优先级 - 橙色
-        break;
-      case 3:
-        priorityColor = Colors.red;    // 高优先级 - 红色
-        break;
-      default:
-        priorityColor = Colors.grey;   // 默认灰色
+    // 使用if-else语句替代switch语句，更简单易懂
+    if (schedule.priority == 1) {
+      priorityColor = Colors.green;  // 低优先级 - 绿色
+    } else if (schedule.priority == 2) {
+      priorityColor = Colors.orange; // 中优先级 - 橙色
+    } else if (schedule.priority == 3) {
+      priorityColor = Colors.red;    // 高优先级 - 红色
+    } else {
+      priorityColor = Colors.grey;   // 默认灰色
     }
 
     // 返回卡片组件
@@ -78,7 +75,7 @@ class ScheduleCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: priorityColor.withValues(alpha: 0.2),
+                    color: priorityColor.withOpacity(0.2),  // 使用withOpacity替代withValues
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -106,28 +103,36 @@ class ScheduleCard extends StatelessWidget {
         trailing: PopupMenuButton<String>(
           onSelected: (String result) {
             // 根据选择执行相应操作
-            switch (result) {
-              case 'edit':
-                // 调用编辑回调
-                onEdit(schedule);
-                break;
-              case 'delete':
-                // 调用删除回调
-                onDelete(schedule.id);
-                break;
+            // 使用if-else语句替代switch语句，更简单易懂
+            if (result == 'edit') {
+              // 调用编辑回调
+              onEdit(schedule);
+            } else if (result == 'delete') {
+              // 直接调用删除回调，确认对话框在HomeScreen中显示
+              onDelete(schedule.id);
             }
           },
           // 菜单项
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            const PopupMenuItem<String>(
-              value: 'edit',
-              child: Text('编辑'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'delete',
-              child: Text('删除'),
-            ),
-          ],
+          itemBuilder: (BuildContext context) {
+            // 创建菜单项列表
+            List<PopupMenuEntry<String>> menuItems = [];
+            // 添加编辑菜单项
+            menuItems.add(
+              const PopupMenuItem<String>(
+                value: 'edit',
+                child: Text('编辑'),
+              ),
+            );
+            // 添加删除菜单项
+            menuItems.add(
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: Text('删除'),
+              ),
+            );
+            // 返回菜单项列表
+            return menuItems;
+          },
         ),
       ),
     );

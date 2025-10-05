@@ -45,16 +45,23 @@ class MonthlyScheduleView extends StatelessWidget {
   /// [service] 日程服务实例
   /// 返回该日期的所有日程列表
   List<Schedule> _getEventsForDay(DateTime day, ScheduleService service) {
-    // 使用isSameDay函数过滤出与指定日期相同的日程
-    return _cachedSchedules.where((schedule) {
-      return isSameDay(schedule.dateTime, day);
-    }).toList();
+    // 创建一个空列表来存储指定日期的日程
+    List<Schedule> events = [];
+    // 遍历缓存的所有日程
+    for (int i = 0; i < _cachedSchedules.length; i++) {
+      Schedule schedule = _cachedSchedules[i];
+      // 使用isSameDay函数检查日期是否相同
+      if (isSameDay(schedule.dateTime, day)) {
+        events.add(schedule);
+      }
+    }
+    // 返回指定日期的日程列表
+    return events;
   }
 
   @override
   Widget build(BuildContext context) {
     // 获取选定日期的日程
-    
     final schedules = _getEventsForDay(selectedDay, scheduleService);
 
     // 如果没有日程，显示提示信息
