@@ -1,6 +1,5 @@
 # NanakoCalendar
-基于Flutter开发的AI日程管理软件
-
+该项目是一个基于Flutter框架的跨平台ai日程管理应用，集成了竞赛时间查询提醒，自然语言导入日程，定制学习计划等功能。目前已完成基础的日程管理功能开发，包括日程的增删改查、多视图展示和数据持久化存储
 ## 项目结构说明
 
 ### 根目录文件
@@ -54,17 +53,17 @@
 #### 功能模块目录 (features/)
 - **features/calendar/**: 日历功能模块
   - **features/calendar/screens/**: 日历页面目录
-    - `home_screen.dart`: 主页面组件，应用的主界面，展示日程列表和操作入口
+    - `home_screen.dart`: 主页面组件，应用的主界面，管理日程的增删改查操作，处理视图切换和手势操作
   - **features/calendar/widgets/**: 日历组件目录
-    - `calendar_widget.dart`: 日历组件，基于table_calendar实现日历展示功能
+    - `calendar_widget.dart`: 日历组件，基于table_calendar实现日历展示功能，支持月视图和周视图切换
 - **features/schedule/**: 日程功能模块
   - **features/schedule/widgets/**: 日程组件目录
-    - `schedule_card.dart`: 日程卡片组件，用于在列表中展示单个日程项
-    - `schedule_list_view.dart`: 日程列表视图组件，展示指定日期的日程列表
-    - `daily_schedule_view.dart`: 日视图日程展示组件
-    - `weekly_schedule_view.dart`: 周视图日程展示组件
-    - `monthly_schedule_view.dart`: 月视图日程展示组件
-    - `schedule_view_manager.dart`: 统一的视图管理组件，管理不同视图的显示和切换
+    - `schedule_card.dart`: 日程卡片组件，用于在列表中展示单个日程项，显示标题、描述、时间和分类等信息
+    - `schedule_list_view.dart`: 日程列表视图组件，展示指定日期的日程列表，复用月视图组件实现
+    - `daily_schedule_view.dart`: 日视图日程展示组件，以列表形式展示选定日期的日程详情，支持下滑手势返回月视图
+    - `weekly_schedule_view.dart`: 周视图日程展示组件，以网格形式展示一周内的日程安排，支持手势操作和日程的编辑删除功能
+    - `monthly_schedule_view.dart`: 月视图日程展示组件，以列表形式展示选定日期的日程详情
+    - `schedule_view_manager.dart`: 统一的视图管理组件，管理日、周、月视图的显示和切换，处理不同视图间的导航和数据传递
 
 #### 共享目录 (shared/)
 - **shared/widgets/**: 共享组件目录
@@ -127,14 +126,13 @@
 
 要添加新的功能模块，建议在 `lib/` 目录下创建相应的子目录和文件，遵循Dart语言规范和Flutter最佳实践。
 
-## 功能概述
-该项目是一个基于Flutter框架的跨平台AI日程管理应用。当前已实现基础的日程管理功能，包括日程的添加、日历视图展示（日、周、月视图切换）以及手势操作支持。后续将在此基础上开发完整的日程管理功能，集成AI智能提醒和自然语言处理能力。
+
 
 ## 功能列表
 - ✔ 基础日程管理（添加，删除，日程）
 - ✔ 日历视图展示（周、月视图切换）
 - ✔ 手势操作支持（上滑、改为退出键，新增视图追踪器）
-- ✘ 日程编辑和删除功能
+- ✔ 日程编辑和删除功能（编辑还没做）
 - ✘ AI自然语言处理（零代码自然语言交互）
 - ✘ 模糊语义识别（精准识别模糊时间表述）
 - ✘ 个性化智能推荐（基于历史行为的智能推荐）
